@@ -49,7 +49,6 @@ class MeetupController {
         manager_id: req.userId,
       },
     });
-
     return res.json(meetups);
   }
 
