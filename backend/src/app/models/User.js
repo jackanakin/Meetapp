@@ -23,7 +23,7 @@ class User extends Model {
   }
 
   static associate(models) {
-    this.hasMany(models.Meetup, { foreignKey: 'manager_id', as: 'maanger' });
+    this.hasMany(models.Meetup, { foreignKey: 'manager_id', as: 'manger' });
     this.hasMany(models.Subscription);
   }
 

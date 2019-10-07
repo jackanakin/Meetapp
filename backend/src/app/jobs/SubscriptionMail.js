@@ -9,7 +9,6 @@ class SubscriptionMail {
 
   async handle({ data }) {
     const { meetup, user } = data;
-    console.log(data);
 
     Mail.sendMail({
       to: `${meetup.manager.name} <${meetup.manager.email}>`,
