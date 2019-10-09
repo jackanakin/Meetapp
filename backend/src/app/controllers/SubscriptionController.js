@@ -1,4 +1,5 @@
-import { isBefore } from 'date-fns';
+import { isBefore, subHours, addHours } from 'date-fns';
+import { Op } from 'sequelize';
 
 import Meetup from '../models/Meetup';
 import User from '../models/User';
@@ -7,6 +8,29 @@ import Queue from '../../lib/Queue';
 import SubscriptionMail from '../jobs/SubscriptionMail';
 
 class SubscriptionController {
+  async index(req, res) {
+    const subscriptions = await Subscription.findAll({
+      where: {
+        user_id: req.userId,
+      },
+      attributes: ['user_id', 'meetup_id'],
+      include: [
+        {
+          model: Meetup,
+          as: 'meetup',
+          attributes: ['title', 'description', 'localization', 'date'],
+          where: {
+            date: {
+              [Op.gte]: new Date(),
+            },
+          },
+        },
+      ],
+      order: [['meetup', 'date', 'ASC']],
+    });
+    return res.json(subscriptions);
+  }
+
   async store(req, res) {
     const meetup = await Meetup.findByPk(req.params.id, {
       include: [{ model: User, as: 'manager', attributes: ['name', 'email'] }],
@@ -14,12 +38,12 @@ class SubscriptionController {
 
     if (meetup.manager_id === req.userId) {
       return res.status(401).json({
-        error: 'You cannot subscribe to your own event',
+        error: 'Você não pode se inscrever em um Meetup que organiza',
       });
     }
 
     if (isBefore(meetup.date, new Date())) {
-      return res.status(401).json({ error: 'Meetup had already happen!' });
+      return res.status(401).json({ error: 'Este Meetup já aconteceu' });
     }
 
     const existentSubscription = await Subscription.findOne({
@@ -30,8 +54,13 @@ class SubscriptionController {
     });
 
     if (existentSubscription) {
-      return res.status(401).json({ error: 'Meetup already subscribed!' });
+      return res
+        .status(401)
+        .json({ error: 'Você já se inscreveu neste Meetup' });
     }
+
+    const dateRangeBefore = subHours(meetup.date, 1);
+    const dateRangeAfter = addHours(meetup.date, 1);
 
     const conflictedSubscriptions = await Subscription.findAll({
       where: {
@@ -44,15 +73,17 @@ class SubscriptionController {
           as: 'meetup',
           attributes: ['date'],
           where: {
-            date: meetup.date,
+            date: {
+              [Op.between]: [dateRangeBefore, dateRangeAfter],
+            },
           },
         },
       ],
     });
 
     if (conflictedSubscriptions.length > 0) {
-      return res.status(400).json({
-        error: 'You already have a Meetup subscribed in the same date!',
+      return res.status(401).json({
+        error: 'Você já está inscrito em uma Meetapp neste horário!',
       });
     }
 
@@ -70,7 +101,7 @@ class SubscriptionController {
       user,
     });
 
-    return res.json({ message: 'Subscribed!' });
+    return res.json({ message: 'Inscricação realizada' });
   }
 }
 

@@ -1,27 +1,36 @@
 import * as Yup from 'yup';
-import { isBefore, parseISO } from 'date-fns';
+import { isBefore, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { Op } from 'sequelize';
 
 import Meetup from '../models/Meetup';
+import User from '../models/User';
 
 class MeetupController {
   async store(req, res) {
     const schema = Yup.object().shape({
-      title: Yup.string().required(),
-      description: Yup.string().required(),
-      localization: Yup.string().required(),
+      title: Yup.string()
+        .required()
+        .min(5),
+      description: Yup.string()
+        .required()
+        .min(8),
+      localization: Yup.string()
+        .required()
+        .min(5),
       date: Yup.date().required(),
       banner_id: Yup.number().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validation error' });
+      return res.status(400).json({ error: 'Verifique os dados de entrada' });
     }
 
     if (isBefore(parseISO(req.body.date), new Date())) {
-      return res.status(400).json({ error: 'Meetup date invalid' });
+      return res.status(400).json({ error: 'Data inválida' });
     }
 
     req.body.manager_id = req.userId;
+
     const {
       id,
       title,
@@ -44,28 +53,81 @@ class MeetupController {
   }
 
   async index(req, res) {
-    const meetups = await Meetup.findAll({
-      where: {
-        manager_id: req.userId,
-      },
-    });
-    return res.json(meetups);
+    const { date, page } = req.query;
+
+    if (!date && !page) {
+      const meetups = await Meetup.findAll({
+        where: {
+          manager_id: req.userId,
+        },
+      });
+      return res.json(meetups);
+    } else {
+      if (page == 0) {
+        return res.status(400).json({
+          error: 'A página 0 não existe',
+        });
+      }
+
+      const searchDate = parseISO(date);
+      const limitPerPage = 10;
+
+      const meetups = await Meetup.findAll({
+        limit: limitPerPage,
+        offset: (page - 1) * limitPerPage,
+        where: {
+          date: {
+            [Op.between]: [startOfDay(searchDate), endOfDay(searchDate)],
+          },
+        },
+        include: [
+          {
+            model: User,
+            as: 'manager',
+            attributes: ['name', 'email'],
+          },
+        ],
+      });
+
+      return res.json(meetups);
+    }
   }
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      title: Yup.string().required(),
-      description: Yup.string().required(),
-      localization: Yup.string().required(),
+      title: Yup.string()
+        .required()
+        .min(5),
+      description: Yup.string()
+        .required()
+        .min(8),
+      localization: Yup.string()
+        .required()
+        .min(8),
       date: Yup.date().required(),
       banner_id: Yup.number().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validation error' });
+      return res.status(400).json({ error: 'Verifique os dados de entrada' });
+    }
+
+    if (isBefore(parseISO(req.body.date), new Date())) {
+      return res.status(400).json({ error: 'Data inválida' });
     }
 
     const meetup = await Meetup.findByPk(req.params.id);
+
+    if (!meetup) {
+      return res.status(400).json({ error: 'Meetup não encontrada' });
+    }
+
+    if (isBefore(meetup.date, new Date())) {
+      return res
+        .status(401)
+        .json({ error: 'Este Meetup já aconteceu, não é possível editá-lo' });
+    }
+
     req.body.manager_id = req.userId;
 
     const {
@@ -84,17 +146,19 @@ class MeetupController {
 
     if (meetup.manager_id !== req.userId) {
       return res.status(401).json({
-        error: "You don't have auth to delete this entry",
+        error: 'Você não é o criador deste Meetup',
       });
     }
 
     if (isBefore(meetup.date, new Date())) {
-      return res.status(401).json({ error: 'Meetup had already happen!' });
+      return res
+        .status(401)
+        .json({ error: 'Este Meetup já aconteceu, não é possível remove-lo' });
     }
 
     await meetup.destroy();
 
-    return res.json({ message: 'Meetup canceled!' });
+    return res.json({ message: 'Meetup cancelado com sucesso' });
   }
 }
 
