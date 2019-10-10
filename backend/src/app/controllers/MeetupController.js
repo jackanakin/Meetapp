@@ -62,35 +62,34 @@ class MeetupController {
         },
       });
       return res.json(meetups);
-    } else {
-      if (page == 0) {
-        return res.status(400).json({
-          error: 'A página 0 não existe',
-        });
-      }
-
-      const searchDate = parseISO(date);
-      const limitPerPage = 10;
-
-      const meetups = await Meetup.findAll({
-        limit: limitPerPage,
-        offset: (page - 1) * limitPerPage,
-        where: {
-          date: {
-            [Op.between]: [startOfDay(searchDate), endOfDay(searchDate)],
-          },
-        },
-        include: [
-          {
-            model: User,
-            as: 'manager',
-            attributes: ['name', 'email'],
-          },
-        ],
-      });
-
-      return res.json(meetups);
     }
+    if (page === 0) {
+      return res.status(400).json({
+        error: 'A página 0 não existe',
+      });
+    }
+
+    const searchDate = parseISO(date);
+    const limitPerPage = 10;
+
+    const meetups = await Meetup.findAll({
+      limit: limitPerPage,
+      offset: (page - 1) * limitPerPage,
+      where: {
+        date: {
+          [Op.between]: [startOfDay(searchDate), endOfDay(searchDate)],
+        },
+      },
+      include: [
+        {
+          model: User,
+          as: 'manager',
+          attributes: ['name', 'email'],
+        },
+      ],
+    });
+
+    return res.json(meetups);
   }
 
   async update(req, res) {
