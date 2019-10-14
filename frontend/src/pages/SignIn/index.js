@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { Form, Input } from '@rocketseat/unform';
 import * as Yup from 'yup';
 
+import logo from '~/assets/logo.png';
+
 import { signInRequest } from '~/store/modules/auth/actions';
 
 const schema = Yup.object().shape({
@@ -25,14 +27,18 @@ export default function SignIn() {
 
   return (
     <>
-      <img src={null} alt="GoBarber" />
+      <img src={logo} alt="Meetapp" />
 
       <Form schema={schema} onSubmit={handleSubmit}>
-        <Input type="email" name="email" placeholder="Seu e-mail" />
-        <Input type="password" name="password" placeholder="Sua senha" />
+        <Input type="email" name="email" placeholder="Digite seu e-mail" />
+        <Input
+          type="password"
+          name="password"
+          placeholder="Sua senha secreta"
+        />
 
-        <button type="submit">{loading ? 'Carregando...' : 'Acessar'}</button>
-        <Link to="/register">Criar conta</Link>
+        <button type="submit">{loading ? 'Carregando...' : 'Entrar'}</button>
+        <Link to="/register">Criar conta grátis</Link>
       </Form>
     </>
   );

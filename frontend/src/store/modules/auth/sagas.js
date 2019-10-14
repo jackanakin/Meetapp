@@ -16,11 +16,6 @@ export function* signIn({ payload }) {
 
     const { token, user } = response.data;
 
-    if (!user.provider) {
-      toast.error('Usuário não é provider');
-      return;
-    }
-
     api.defaults.headers.Authorization = `Bearer ${token}`;
 
     yield put(signInSuccess(token, user));
@@ -39,12 +34,12 @@ export function* signUp({ payload }) {
       name,
       email,
       password,
-      provider: true,
     });
 
+    toast.success('Você foi cadastrado com sucesso!');
     history.push('/');
   } catch (err) {
-    toast.error('Falha no cadastro, verifique seus dados!');
+    toast.error(err.response.data.error);
     yield put(signInFailure());
   }
 }
