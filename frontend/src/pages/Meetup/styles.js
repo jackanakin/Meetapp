@@ -30,42 +30,4 @@ export const Container = styled.div`
       margin: 0 15px;
     }
   }
-  ul {
-    display: flex;
-    flex-direction: column;
-    margin-top: 30px;
-  }
-`;
-
-export const Meetup = styled.li`
-  margin: 0 0 8px 0;
-  width: 900px;
-  padding: 20px;
-  border-radius: 6px;
-  background: #23202b;
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-
-  strong {
-    color: #fff;
-    font-size: 17px;
-    font-weight: bold;
-  }
-
-  div {
-    display: flex;
-    align-items: center;
-
-    span {
-      margin-right: 15px;
-      color: #666;
-    }
-
-    a {
-      decoration: none;
-    }
-  }
 `;
