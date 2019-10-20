@@ -1,6 +1,13 @@
-export function setMeetup(data) {
+export function setMeetupRequest(meetup) {
   return {
-    type: '@user/SET_MEETUP',
-    payload: { data },
+    type: '@meetup/SET_MEETUP_REQUEST',
+    payload: { meetup },
+  };
+}
+
+export function setMeetupSuccess(meetup) {
+  return {
+    type: '@meetup/SET_MEETUP_SUCCESS',
+    payload: { meetup },
   };
 }

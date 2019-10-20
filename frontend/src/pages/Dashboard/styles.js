@@ -67,5 +67,11 @@ export const Meetup = styled.li`
     a {
       decoration: none;
     }
+
+    button {
+      padding: 0;
+      border: none;
+      background: none;
+    }
   }
 `;

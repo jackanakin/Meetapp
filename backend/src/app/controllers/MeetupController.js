@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 
 import Meetup from '../models/Meetup';
 import User from '../models/User';
+import File from '../models/File';
 
 class MeetupController {
   async store(req, res) {
@@ -60,6 +61,13 @@ class MeetupController {
         where: {
           manager_id: req.userId,
         },
+        include: [
+          {
+            model: File,
+            as: 'banner',
+            attributes: ['url', 'id', 'path'],
+          },
+        ],
       });
       return res.json(meetups);
     }
